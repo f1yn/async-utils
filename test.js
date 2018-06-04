@@ -11,6 +11,9 @@ const syncFunction1 = input => `x${input}x`;
 const asyncFunction1 = async input => `b${input}b`;
 const syncFunction2 = input => `a${input}a`;
 const asyncFunction2 = async input => `_${input}_`;
+const throwingSyncFunction = (input) => {
+	throw new Error('handled error');
+};
 
 /**
  * Flow adapter test covers all the code within this module (not edge cases)
@@ -18,6 +21,7 @@ const asyncFunction2 = async input => `_${input}_`;
 describe('flow adapter', async () => {
 	let asyncFlow;
 	let testFlow;
+	let brokenFlow;
 
 	before(() => {
 		// build async flow adapter
@@ -30,10 +34,22 @@ describe('flow adapter', async () => {
 			syncFunction2,
 			asyncFunction2
 		);
+
+		brokenFlow = asyncFlow(
+			syncFunction1,
+			asyncFunction1,
+			throwingSyncFunction,
+			asyncFunction1
+		);
 	});
 
 	it(`handles async data flow`, async () => {
 		const rendered = await testFlow(BASE_INPUT);
 		assert(rendered === EXPECTED_OUTPUT, `unexpected result ${rendered}, expected ${EXPECTED_OUTPUT}`);
+	});
+
+	it(`handles broken async data flow`, async () => {
+		const rendered = await brokenFlow(BASE_INPUT);
+		assert(rendered instanceof Error, `expected error to be passed through`);
 	});
 });
