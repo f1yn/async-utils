@@ -16,7 +16,23 @@ const isPromise = instance => (
  */
 const buildAsyncParserResolver = (method, baseValue, args) =>
 	new Promise(resolve => baseValue
-		.then(result => resolve(method(result, ...args))));
+		.then(result => resolve(method(result, ...args)))
+		.catch(error => error));
+
+/**
+ * @private
+ * Wraps a method in an error handler with Error passthrough
+ * @param  {Function} method The synchronous function to invoke
+ * @return {Function} Function that executes method
+ */
+const methodWrapper = method => (...args) => {
+	if (args[0] instanceof Error) return args[0];
+	try {
+		return method(...args);
+	} catch (e) {
+		return e;
+	}
+};
 
 /**
  * Wrapper for binding methods to execute async if first argument is pending
@@ -25,20 +41,25 @@ const buildAsyncParserResolver = (method, baseValue, args) =>
  *    or synchronous depending on arguments passed to it - always checks
  *    first argument
  */
-const conditionalAsyncWrapper = method => (...args) => {
-	if (typeof method !== 'function') {
-		throw new Error(`Async wrapper must take funciton as primary argument, but recieved ${typeof method}`);
-	}
-	const [baseValue] = args;
-
-	if (isPromise(baseValue)) {
-		// process.stdout.write('detected and handling asynchronous data flow...\n');
-		return buildAsyncParserResolver(method, baseValue, args.slice(1));
+const conditionalAsyncWrapper = baseMethod => {
+	if (typeof baseMethod !== 'function') {
+		throw new Error(`Async wrapper must take function as primary argument, but recieved ${typeof method}`);
 	}
 
-	return method(...args);
+	// wrap baseMethod in condition
+	const method = methodWrapper(baseMethod);
+
+	return (...args) => {
+		const [baseValue] = args;
+
+		if (isPromise(baseValue)) {
+			// process.stdout.write('detected and handling asynchronous data flow...\n');
+			return buildAsyncParserResolver(method, baseValue, args.slice(1));
+		}
+
+		return method(...args);
+	};
 };
-
 /**
  * Adapter for allowing the asynchronous flow of data via a flow utility
  * function (e.g. lodash's flow)
