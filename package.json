@@ -1,15 +1,24 @@
 {
-  "name": "async-utils",
+  "name": "@o3/async-utils",
   "version": "0.0.2",
   "description": "A helpful assortment of async utility functions",
   "main": "async.js",
   "scripts": {
     "test": "mocha ./test.js"
   },
+  "repository": "flynnham/async-utils",
+  "files": [
+    "async.js",
+    "LICENCE",
+    "README.md"
+  ],
   "author": "Flynn Buckingham",
   "license": "MIT",
   "devDependencies": {
     "lodash.flow": "^3.5.0",
     "mocha": "^5.2.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
